@@ -1,0 +1,38 @@
+<div id="login-container" class="container">
+  <h2>Login Admin</h2>
+  <input type="text" id="username" placeholder="Username">
+  <input type="password" id="password" placeholder="Password">
+  <button class="save-btn" onclick="login()">Login</button>
+</div>
+
+<div id="app-container" style="display:none;">
+  <!-- menu, produk, transaksi, laporan akan tampil di sini -->
+  <div class="nav">
+    <button onclick="showPage('produk')">Produk</button>
+    <button onclick="showPage('jual')">Jual</button>
+    <button onclick="showPage('laporan')">Laporan</button>
+    <button onclick="logout()">Logout</button>
+  </div>
+  <div class="container" id="page-content"></div>
+</div>
+
+<script>
+const adminUser = {username: "admin", password: "1234"}; // bisa ganti
+
+function login() {
+  const u = document.getElementById('username').value.trim();
+  const p = document.getElementById('password').value.trim();
+  if(u === adminUser.username && p === adminUser.password){
+    document.getElementById('login-container').style.display = 'none';
+    document.getElementById('app-container').style.display = 'block';
+    showPage('produk');
+  } else {
+    alert('Username atau password salah!');
+  }
+}
+
+function logout() {
+  document.getElementById('login-container').style.display = 'block';
+  document.getElementById('app-container').style.display = 'none';
+}
+</script>
