@@ -1,3 +1,29 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Penjualan Telur</title>
+<style>
+body {font-family: Arial; margin:0; padding:0; background:#f7f7f7;}
+header {background:#f39c12; color:white; padding:15px; text-align:center;}
+.container {padding:15px; background:white; margin:10px; border-radius:8px; box-shadow:0 2px 6px rgb(0 0 0 / 0.1);}
+.nav {display:flex; justify-content:space-around; margin:10px 0;}
+.nav button {padding:10px 15px; font-weight:bold; border:none; border-radius:6px; background:#e67e22; color:white; cursor:pointer;}
+.nav button:hover {background:#d35400;}
+input, select, button {width:100%; margin:5px 0; padding:10px; border-radius:6px; border:1px solid #ccc; box-sizing:border-box;}
+button.save-btn {background:#27ae60; color:white; font-weight:bold; border:none;}
+button.save-btn:hover {background:#219150;}
+table {width:100%; border-collapse:collapse; margin-top:15px;}
+table th, table td {padding:8px; border:1px solid #ddd; text-align:center;}
+.stock-low {color:red; font-weight:bold;}
+</style>
+</head>
+<body>
+
+<header><h1>Penjualan Telur</h1></header>
+
+<!-- LOGIN -->
 <div id="login-container" class="container">
   <h2>Login Admin</h2>
   <input type="text" id="username" placeholder="Username">
@@ -5,8 +31,8 @@
   <button class="save-btn" onclick="login()">Login</button>
 </div>
 
+<!-- APP -->
 <div id="app-container" style="display:none;">
-  <!-- menu, produk, transaksi, laporan akan tampil di sini -->
   <div class="nav">
     <button onclick="showPage('produk')">Produk</button>
     <button onclick="showPage('jual')">Jual</button>
@@ -17,22 +43,200 @@
 </div>
 
 <script>
-const adminUser = {username: "admin", password: "1234"}; // bisa ganti
+// ======== Data ========
+const adminUser = {username:"admin", password:"1234"};
+let produk = JSON.parse(localStorage.getItem('produk')) || [];
+let transaksi = JSON.parse(localStorage.getItem('transaksi')) || [];
 
-function login() {
+// ======== Login ========
+function login(){
   const u = document.getElementById('username').value.trim();
   const p = document.getElementById('password').value.trim();
   if(u === adminUser.username && p === adminUser.password){
-    document.getElementById('login-container').style.display = 'none';
-    document.getElementById('app-container').style.display = 'block';
+    document.getElementById('login-container').style.display='none';
+    document.getElementById('app-container').style.display='block';
     showPage('produk');
   } else {
     alert('Username atau password salah!');
   }
 }
-
-function logout() {
-  document.getElementById('login-container').style.display = 'block';
-  document.getElementById('app-container').style.display = 'none';
+function logout(){
+  document.getElementById('login-container').style.display='block';
+  document.getElementById('app-container').style.display='none';
 }
-</script>
+
+// ======== Simpan Data ========
+function saveData(){
+  localStorage.setItem('produk', JSON.stringify(produk));
+  localStorage.setItem('transaksi', JSON.stringify(transaksi));
+}
+
+// ======== Menu ========
+function showPage(page){
+  if(page==='produk') return tampilProduk();
+  if(page==='jual') return tampilJual();
+  if(page==='laporan') return tampilLaporan();
+}
+
+// ======== PRODUK ========
+function tampilProduk(){
+  let html = `
+    <h2>Tambah Produk</h2>
+    <input type="text" id="nama" placeholder="Jenis Telur">
+    <input type="number" id="harga" placeholder="Harga per butir (Rp)" min="0">
+    <input type="number" id="stok" placeholder="Stok tersedia (butir)" min="0">
+    <button class="save-btn" onclick="tambahProduk()">Simpan Produk</button>
+    <h3>Daftar Produk</h3>
+    <table>
+      <tr><th>Jenis Telur</th><th>Harga</th><th>Stok</th><th>Aksi</th></tr>
+  `;
+  produk.forEach((p,i)=>{
+    html += `<tr>
+      <td>${p.nama}</td>
+      <td>${p.harga.toLocaleString()}</td>
+      <td class="${p.stok<10?'stock-low':''}">${p.stok}</td>
+      <td>
+        <button onclick="editProduk(${i})">Edit</button>
+        <button onclick="hapusProduk(${i})">Hapus</button>
+      </td>
+    </tr>`;
+  });
+  html+='</table>';
+  document.getElementById('page-content').innerHTML = html;
+}
+
+function tambahProduk(){
+  const nama = document.getElementById('nama').value.trim();
+  const harga = parseInt(document.getElementById('harga').value);
+  const stok = parseInt(document.getElementById('stok').value);
+  if(!nama || isNaN(harga)||harga<0 || isNaN(stok)||stok<0){alert('Isi data dengan benar!');return;}
+  produk.push({nama,harga,stok});
+  saveData(); tampilProduk();
+  document.getElementById('nama').value='';
+  document.getElementById('harga').value='';
+  document.getElementById('stok').value='';
+}
+
+function editProduk(index){
+  const p = produk[index];
+  document.getElementById('nama').value=p.nama;
+  document.getElementById('harga').value=p.harga;
+  document.getElementById('stok').value=p.stok;
+  document.querySelector('.save-btn').innerText='Update Produk';
+  document.querySelector('.save-btn').onclick=function(){
+    const nama = document.getElementById('nama').value.trim();
+    const harga = parseInt(document.getElementById('harga').value);
+    const stok = parseInt(document.getElementById('stok').value);
+    if(!nama || isNaN(harga)||harga<0 || isNaN(stok)||stok<0){alert('Isi data dengan benar!');return;}
+    produk[index]={nama,harga,stok};
+    saveData(); tampilProduk();
+    document.querySelector('.save-btn').innerText='Simpan Produk';
+    document.querySelector('.save-btn').onclick=tambahProduk;
+  }
+}
+
+function hapusProduk(index){
+  if(confirm('Yakin hapus produk ini?')){
+    produk.splice(index,1); saveData(); tampilProduk();
+  }
+}
+
+// ======== TRANSAKSI ========
+function tampilJual(){
+  if(produk.length===0){document.getElementById('page-content').innerHTML='<p>Belum ada produk.</p>'; return;}
+  let options = produk.map((p,i)=>`<option value="${i}">${p.nama} - Rp ${p.harga.toLocaleString()}</option>`).join('');
+  let html=`<h2>Transaksi Penjualan</h2>
+    <input type="text" id="namaPembeli" placeholder="Nama Pembeli">
+    <select id="produkSelect">${options}</select>
+    <input type="number" id="jumlah" placeholder="Jumlah beli (butir)" min="1">
+    <button class="save-btn" onclick="tambahTransaksi()">Jual</button>
+    <h3>Daftar Transaksi</h3>
+    <table><tr><th>Pembeli</th><th>Produk</th><th>Harga</th><th>Jumlah</th><th>Total</th><th>Aksi</th></tr>`;
+  transaksi.forEach((t,i)=>{
+    html += `<tr>
+      <td>${t.namaPembeli}</td>
+      <td>${t.produk}</td>
+      <td>${t.harga.toLocaleString()}</td>
+      <td>${t.jumlah}</td>
+      <td>${t.total.toLocaleString()}</td>
+      <td>
+        <button onclick="editTransaksi(${i})">Edit</button>
+        <button onclick="hapusTransaksi(${i})">Hapus</button>
+      </td>
+    </tr>`;
+  });
+  html+='</table>';
+  document.getElementById('page-content').innerHTML=html;
+}
+
+function tambahTransaksi(){
+  const namaPembeli=document.getElementById('namaPembeli').value.trim();
+  const produkIndex=parseInt(document.getElementById('produkSelect').value);
+  const jumlah=parseInt(document.getElementById('jumlah').value);
+  if(!namaPembeli || isNaN(produkIndex)||isNaN(jumlah)||jumlah<1){alert('Isi data dengan benar!');return;}
+  if(produk[produkIndex].stok<jumlah){alert('Stok tidak cukup!');return;}
+  const total=produk[produkIndex].harga*jumlah;
+  produk[produkIndex].stok-=jumlah;
+  transaksi.push({namaPembeli,produk:produk[produkIndex].nama,harga:produk[produkIndex].harga,jumlah,total,tanggal:new Date().toLocaleDateString()});
+  saveData(); tampilJual();
+  document.getElementById('namaPembeli').value=''; document.getElementById('jumlah').value='';
+}
+
+function editTransaksi(index){
+  const t=transaksi[index];
+  const pIndex=produk.findIndex(p=>p.nama===t.produk);
+  document.getElementById('namaPembeli').value=t.namaPembeli;
+  document.getElementById('produkSelect').value=pIndex;
+  document.getElementById('jumlah').value=t.jumlah;
+  document.querySelector('.save-btn').innerText='Update Transaksi';
+  document.querySelector('.save-btn').onclick=function(){
+    const namaPembeli=document.getElementById('namaPembeli').value.trim();
+    const produkIndex=parseInt(document.getElementById('produkSelect').value);
+    const jumlah=parseInt(document.getElementById('jumlah').value);
+    if(!namaPembeli || isNaN(produkIndex)||isNaN(jumlah)||jumlah<1){alert('Isi data dengan benar!');return;}
+    // kembalikan stok lama
+    produk[produkIndex].stok+=transaksi[index].jumlah;
+    if(produk[produkIndex].stok<jumlah){alert('Stok tidak cukup!');return;}
+    produk[produkIndex].stok-=jumlah;
+    transaksi[index]={namaPembeli,produk:produk[produkIndex].nama,harga:produk[produkIndex].harga,jumlah,total:produk[produkIndex].harga*jumlah,tanggal:new Date().toLocaleDateString()};
+    saveData(); tampilJual();
+    document.querySelector('.save-btn').innerText='Jual';
+    document.querySelector('.save-btn').onclick=tambahTransaksi;
+  }
+}
+
+function hapusTransaksi(index){
+  if(confirm('Yakin hapus transaksi ini?')){
+    // kembalikan stok
+    const pIndex=produk.findIndex(p=>p.nama===transaksi[index].produk);
+    if(pIndex>=0) produk[pIndex].stok+=transaksi[index].jumlah;
+    transaksi.splice(index,1); saveData(); tampilJual();
+  }
+}
+
+// ======== LAPORAN ========
+function tampilLaporan(){
+  if(transaksi.length===0){document.getElementById('page-content').innerHTML='<p>Belum ada transaksi.</p>'; return;}
+  let totalPendapatan=0;
+  let html=`<h2>Laporan Penjualan</h2>
+    <table>
+      <tr><th>Tanggal</th><th>Pembeli</th><th>Produk</th><th>Harga</th><th>Jumlah</th><th>Total</th></tr>`;
+  transaksi.forEach(t=>{
+    totalPendapatan+=t.total;
+    html+=`<tr>
+      <td>${t.tanggal}</td>
+      <td>${t.namaPembeli}</td>
+      <td>${t.produk}</td>
+      <td>${t.harga.toLocaleString()}</td>
+      <td>${t.jumlah}</td>
+      <td>${t.total.toLocaleString()}</td>
+    </tr>`;
+  });
+  html+=`<tr><th colspan="5">Total Pendapatan</th><th>Rp ${totalPendapatan.toLocaleString()}</th></tr></table>`;
+  html+='<h3>Stok Sisa Produk</h3><table><tr><th>Produk</th><th>Stok</th></tr>';
+  produk.forEach(p=>{html+=`<tr><td>${p.nama}</td><td>${p.stok}</td></tr>`;});
+  html+='</table>';
+  document.getElementById('page-content').innerHTML=html;
+}
+
+// ======== DEFAULT ========
